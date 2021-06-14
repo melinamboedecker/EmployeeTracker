@@ -1,0 +1,25 @@
+{
+  "name": "employeetracker",
+  "version": "1.0.0",
+  "description": "An app for managing employees using node, inquirer, and MySQL",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/melinamboedecker/EmployeeTracker.git"
+  },
+  "author": "Melina Boedecker",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/melinamboedecker/EmployeeTracker/issues"
+  },
+  "homepage": "https://github.com/melinamboedecker/EmployeeTracker#readme",
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "inquirer": "^8.1.0",
+    "mysql": "^2.18.1"
+  }
+}
