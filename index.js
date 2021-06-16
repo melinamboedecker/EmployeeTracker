@@ -21,7 +21,16 @@ connection.connect((err) => {
     runSearch();
   });
   
-  const runSearch = () => {
+console.log(' ________________________________________________________________')
+console.log('')
+console.log('                Employee Tracker                                  ')
+console.log(' ________________________________________________________________')
+console.log('')
+console.log('')
+
+
+
+const runSearch = () => {
     inquirer
       .prompt({
         name: 'action',
@@ -47,7 +56,6 @@ connection.connect((err) => {
       .then((answer) => {
         switch (answer.action) {
           case 'View all employees':
-                console.log('view employees')
                 // viewEmployees();
             break;
   
