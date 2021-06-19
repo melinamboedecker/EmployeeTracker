@@ -1,5 +1,6 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
+const cTable = require('console.table');
 
 // create the connection information for the sql database
 const connection = mysql.createConnection({
@@ -56,7 +57,7 @@ const runSearch = () => {
       .then((answer) => {
         switch (answer.action) {
           case 'View all employees':
-                // viewEmployees();
+            viewEmployees();
             break;
   
           case 'View all employees by department':
@@ -70,8 +71,8 @@ const runSearch = () => {
             break;
   
           case 'Add employee':
-              console.log('add emp')
-            // addEmployee();
+            //   console.log('add emp')
+            addEmployee();
             break;
 
           case 'Remove employee':
@@ -127,6 +128,70 @@ const runSearch = () => {
             console.log(`Invalid action: ${answer.action}`);
             break;
         }
+      });
+  };
+
+  const viewEmployees = () => {
+    const query = 'SELECT * FROM employees';
+
+    connection.query(query, (err, res) => {
+        console.log('\n');
+        console.table(res);
+        runSearch();
+      });
+
+
+    console.table([
+        query
+    ])
+    runSearch();
+  }
+
+  const addEmployee = () => {
+    inquirer
+      .prompt([{
+        name: 'firstname',
+        type: 'input',
+        message: "What is the employee's first name?",
+      },
+      {
+        name: 'lastname',
+        type: 'input',
+        message: "What is the employee's last name?",
+      },
+      {
+        name: 'role_ID',
+        type: 'input',
+        message: "What is the employee's role ID number?",
+      },
+      {
+        name: 'manager_ID',
+        type: 'input',
+        message: "What is the employee's manager ID number?",
+      }
+    ])
+      .then((answer) => {
+          console.log(answer.firstname)
+        //when questions finished, insert information into employees table in db
+        connection.query(
+            // console.log(answer.firstname)
+            // console.log(answer.lastname);
+            // console.log(answer.role_id);
+            // console.log(answer.manager_id);
+            'INSERT INTO employees SET ?',
+            {
+                first_name: answer.firstname,
+                last_name: answer.lastname,
+                role_id: answer.role_id,
+                manager_id: answer.manager_id
+            },
+            (err) => {
+                if (err) throw err;
+                console.log('Employee entered successfully');
+                //go back to main menu
+                runSearch();
+            }
+        );
       });
   };
   
