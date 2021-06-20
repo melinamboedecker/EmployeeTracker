@@ -57,17 +57,15 @@ const runSearch = () => {
       .then((answer) => {
         switch (answer.action) {
           case 'View all employees':
-            viewEmployees();
+            viewAllEmployees();
             break;
   
           case 'View all employees by department':
-            console.log('view all emp by dept')
-            // viewAllEmployeesbyDept();
+            viewAllEmployeesbyDept();
             break;
   
           case 'View all employees by manager':
-            console.log('view all emp by mgr')
-            // viewAllEmployeesbyMgr();
+            viewAllEmployeesbyMgr();
             break;
   
           case 'Add employee':
@@ -76,13 +74,11 @@ const runSearch = () => {
             break;
 
           case 'Remove employee':
-              console.log('remove emp')
-            // removeEmployee();
+            removeEmployee();
             break;
             
           case 'Update employee role':
-              console.log('update emp role')
-            // updateEmployeeRole();
+            updateEmployeeRole();
             break;
 
           case 'Update employee manager':
@@ -90,14 +86,12 @@ const runSearch = () => {
             // updateEmployeeManager();
             break; 
 
-          case 'View all roles':
-              console.log('view all roles')   
-            // viewAllRoles();
+          case 'View all roles': 
+            viewAllRoles();
             break;
 
-          case 'Add role':
-            console.log('add roles')   
-            //addRole();
+          case 'Add role':  
+            addRole();
             break;    
   
           case 'Remove role':
@@ -105,19 +99,16 @@ const runSearch = () => {
             //removeRole();
             break;
 
-          case 'View all departments':
-            console.log('view all departments')   
-            //viewAllDepartments();
+          case 'View all departments':   
+            viewAllDepartments();
             break;
 
-          case 'Add department':
-            console.log('add department')   
-            //addDepartment();
+          case 'Add department': 
+            addDepartment();
             break;
     
-          case 'Remove department':
-            console.log('remove department')   
-            //removeDepartment();
+          case 'Remove department': 
+            removeDepartment();
             break;
 
           case 'exit':
@@ -131,8 +122,29 @@ const runSearch = () => {
       });
   };
 
-  const viewEmployees = () => {
-    const query = 'SELECT * FROM employees';
+  const viewAllEmployees = () => {
+    const query = 'SELECT employees.id AS "employee id", employees.first_name, employees.last_name, roles.title AS title, departments.name AS department, roles.salary, CONCAT (m.first_name, " ", m.last_name) AS manager FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id JOIN employees m ON employees.manager_id = m.id';
+
+    connection.query(query, (err, res) => {
+        console.log('\n');
+        console.table(res);
+        runSearch();
+      });
+  };
+
+const viewAllEmployeesbyDept = () => {
+    const query = 'SELECT departments.name AS Department, employees.id AS "Employee ID", employees.first_name AS "First Name", employees.last_name AS "Last Name", roles.title AS Role, employees.manager_id AS "Manager ID" FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id ORDER BY departments.name'
+
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        console.log('\n');
+        console.table(res);
+        runSearch();
+      });
+};
+
+const viewAllEmployeesbyMgr = () => {
+    const query = 'SELECT employees.manager_id AS "Manager ID", employees.first_name AS "First Name", employees.last_name AS "Last Name", roles.title AS Role FROM employees LEFT JOIN roles ON employees.role_id = roles.id ORDER BY employees.manager_id'
 
     connection.query(query, (err, res) => {
         console.log('\n');
@@ -144,10 +156,9 @@ const runSearch = () => {
     console.table([
         query
     ])
-    runSearch();
-  }
+};
 
-  const addEmployee = () => {
+const addEmployee = () => {
     inquirer
       .prompt([{
         name: 'firstname',
@@ -171,19 +182,14 @@ const runSearch = () => {
       }
     ])
       .then((answer) => {
-          console.log(answer.firstname)
         //when questions finished, insert information into employees table in db
         connection.query(
-            // console.log(answer.firstname)
-            // console.log(answer.lastname);
-            // console.log(answer.role_id);
-            // console.log(answer.manager_id);
             'INSERT INTO employees SET ?',
             {
                 first_name: answer.firstname,
                 last_name: answer.lastname,
-                role_id: answer.role_id,
-                manager_id: answer.manager_id
+                role_id: answer.role_ID,
+                manager_id: answer.manager_ID
             },
             (err) => {
                 if (err) throw err;
@@ -193,6 +199,227 @@ const runSearch = () => {
             }
         );
       });
+};
+  
+const removeEmployee = () => {
+    console.log('make fn to remove employee here')
+  
+    let emps;
+   const query = 'SELECT * FROM employees';
+    connection.query(query, (err, res) => {
+        const emps = res
+        console.log(emps);
+    })
+//     inquirer
+//     .prompt([{
+//       name: 'employeetoremove',
+//       type: 'list',
+//       message: "Which employee do you wish to remove?",
+//       choices: [emps]
+//     },
+//   ])
+    // .then((answer) => {
+    //     console.log('now delete')
+    //   //when questions finished, insert information into employees table in db
+    //   connection.query(
+    //       'INSERT INTO employees SET ?',
+    //       {
+    //           first_name: answer.firstname,
+    //           last_name: answer.lastname,
+    //           role_id: answer.role_ID,
+    //           manager_id: answer.manager_ID
+    //       },
+    //       (err) => {
+    //           if (err) throw err;
+    //           console.log('Employee entered successfully');
+    //           //go back to main menu
+    //           runSearch();
+    //       }
+    //   );
+    // });
+}; 
+
+
+const updateEmployeeRole = () => {
+    console.log('write update EMp role functino');
+    const query = 'SELECT * FROM employees'
+    let employees;
+
+    connection.query(query, (err, res) => {
+        if (err){
+            throw err;
+        }
+        employees = res
+        console.log(res)
+    })
+
+
+
+
+    inquirer
+      .prompt([{
+        name: 'employeetoupdate',
+        type: 'list',
+        message: "Which employee do you want to update?",
+      },
+    ])
+        .then((answer) => {
+            //put answer here and pull current role from it
+        })
+
+
+
+        .prompt([{
+            name: 'new role',
+            type: 'input',
+            message: "Enter new role ID",
+          },
+        ])
+
+      .then((answer) => {
+        //when questions finished, update employee role in db
+        connection.query(
+            'INSERT INTO employees SET ?',
+            {
+                first_name: answer.firstname,
+                last_name: answer.lastname,
+                role_id: answer.role_ID,
+                manager_id: answer.manager_ID
+            },
+            (err) => {
+                if (err) throw err;
+                console.log('Employee entered successfully');
+                //go back to main menu
+                runSearch();
+            }
+        );
+      });
+
+};
+
+
+const viewAllRoles = () => {
+    const query = 'SELECT roles.id, title, salary, departments.name AS department FROM roles LEFT JOIN departments ON roles.department_id = departments.id';
+
+    connection.query(query, (err, res) => {
+        console.log('\n');
+        console.table(res);
+        runSearch();
+      });
+
   };
-  
-  
+
+const addRole = () => {
+    inquirer
+      .prompt([{
+        name: 'title',
+        type: 'input',
+        message: "What is the title?",
+      },
+      {
+        name: 'salary',
+        type: 'input',
+        message: "What is the salary?",
+      },
+      {
+        name: 'department_ID',
+        type: 'input',
+        message: "What is the department ID number?",
+      },
+      
+    ])
+      .then((answer) => {
+        //when questions finished, insert information into roles table in db
+        connection.query(
+            'INSERT INTO roles SET ?',
+            {
+                title: answer.title,
+                salary: answer.salary,
+                department_id: answer.department_ID
+            },
+            (err) => {
+                if (err) throw err;
+                console.log('Role entered successfully');
+                //go back to main menu
+                runSearch();
+            }
+        );
+      });
+};
+
+const viewAllDepartments = () => {
+    const query = 'SELECT id, name AS "department name" FROM departments';
+
+    connection.query(query, (err, res) => {
+        console.log('\n');
+        console.table(res);
+        runSearch();
+      });
+  };
+
+const addDepartment = () => {
+    inquirer
+      .prompt([{
+        name: 'name',
+        type: 'input',
+        message: "What is the department name?",
+      },
+    ])
+      .then((answer) => {
+        //when questions finished, insert information into departments table in db
+        connection.query(
+            'INSERT INTO departments SET ?',
+            {
+                name: answer.name,
+            },
+            (err) => {
+                if (err) throw err;
+                console.log('Department entered successfully');
+                //go back to main menu
+                runSearch();
+            }
+        );
+      });
+};
+
+const removeDepartment = () => {
+    const query = 'SELECT name FROM departments';
+    let departments = [];
+
+    connection.query (query, (err, res) => {
+        if (err) throw err;
+        res.forEach ((d)=>{
+            departments.push(d.name)
+        })
+        departments.push("exit");
+        console.log(departments);
+        
+        inquirer
+        .prompt([{
+          name: 'department',
+          type: 'list',
+          message: "What department do you want to delete? or choose exit to return to main menu",
+          choices: departments
+        },
+      ])
+        .then((answer) => {
+          //when questions finished, insert information into departments table in db
+          console.log(answer)
+        //   connection.query(
+        //       'INSERT INTO departments SET ?',
+        //       {
+        //           name: answer.name,
+        //       },
+        //       (err) => {
+        //           if (err) throw err;
+        //           console.log('Department entered successfully');
+        //           //go back to main menu
+        //           runSearch();
+        //       }
+        //   );
+        });
+
+
+
+      });
+};
