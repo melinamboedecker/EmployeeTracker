@@ -122,9 +122,10 @@ const runSearch = () => {
   };
 
   const viewAllEmployees = () => {
-    const query = 'SELECT employees.id AS "employee id", employees.first_name, employees.last_name, roles.title AS title, departments.name AS department, roles.salary, CONCAT (m.first_name, " ", m.last_name) AS manager FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id JOIN employees m ON employees.manager_id = m.id';
+    const query = 'SELECT employees.id AS "employee id", employees.first_name, employees.last_name, roles.title, departments.name AS department, roles.salary, CONCAT (m.first_name, " ", m.last_name) AS manager FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id LEFT JOIN employees m ON employees.manager_id = m.id';
 
     connection.query(query, (err, res) => {
+        if (err) throw err;
         console.log('\n');
         console.table(res);
         runSearch();
@@ -188,7 +189,7 @@ const addEmployee = () => {
                 first_name: answer.firstname,
                 last_name: answer.lastname,
                 role_id: answer.role_ID,
-                manager_id: answer.manager_ID
+                // manager_id: answer.manager_ID
             },
             (err) => {
                 if (err) throw err;
@@ -201,41 +202,48 @@ const addEmployee = () => {
 };
   
 const removeEmployee = () => {
-    console.log('make fn to remove employee here')
-  
-    let emps;
-   const query = 'SELECT * FROM employees';
-    connection.query(query, (err, res) => {
-        const emps = res
-        console.log(emps);
-    })
-//     inquirer
-//     .prompt([{
-//       name: 'employeetoremove',
-//       type: 'list',
-//       message: "Which employee do you wish to remove?",
-//       choices: [emps]
-//     },
-//   ])
-    // .then((answer) => {
-    //     console.log('now delete')
-    //   //when questions finished, insert information into employees table in db
-    //   connection.query(
-    //       'INSERT INTO employees SET ?',
-    //       {
-    //           first_name: answer.firstname,
-    //           last_name: answer.lastname,
-    //           role_id: answer.role_ID,
-    //           manager_id: answer.manager_ID
-    //       },
-    //       (err) => {
-    //           if (err) throw err;
-    //           console.log('Employee entered successfully');
-    //           //go back to main menu
-    //           runSearch();
-    //       }
-    //   );
-    // });
+    const query = 'SELECT id, CONCAT (first_name, " ", last_name) AS name FROM employees';
+    let employees = [];
+
+    connection.query (query, (err, res) => {
+        if (err) throw err;
+        res.forEach ((e)=>{
+            employees.push(e.title)
+        })
+        employees.push("exit");
+        
+        inquirer
+        .prompt([{
+          name: 'name',
+          type: 'list',
+          message: "Which employee do you want to delete? or choose exit to return to main menu",
+          choices: employees
+        },
+      ])
+        .then((answer) => {
+          //when employee chosen, delete it from db
+          if (answer.name === 'exit') {
+            runSearch();
+          } else {
+            connection.query(
+                'DELETE FROM employees WHERE ?',
+                {
+                    id: answer.id,
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log('Employee ' + answer.name + ' deleted successfully');
+                    //go back to main menu
+                    runSearch();
+                }
+            );  
+            }
+        });
+
+      });
+
+
+
 }; 
 
 
