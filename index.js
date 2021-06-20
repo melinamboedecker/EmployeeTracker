@@ -392,7 +392,6 @@ const removeDepartment = () => {
             departments.push(d.name)
         })
         departments.push("exit");
-        console.log(departments);
         
         inquirer
         .prompt([{
@@ -403,23 +402,24 @@ const removeDepartment = () => {
         },
       ])
         .then((answer) => {
-          //when questions finished, insert information into departments table in db
-          console.log(answer)
-        //   connection.query(
-        //       'INSERT INTO departments SET ?',
-        //       {
-        //           name: answer.name,
-        //       },
-        //       (err) => {
-        //           if (err) throw err;
-        //           console.log('Department entered successfully');
-        //           //go back to main menu
-        //           runSearch();
-        //       }
-        //   );
+          //when department chosen, delete it from db
+          if (answer.department === 'exit') {
+            runSearch();
+          } else {
+            connection.query(
+                'DELETE FROM departments WHERE ?',
+                {
+                    name: answer.department,
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log('Department ' + answer.department + ' deleted successfully');
+                    //go back to main menu
+                    runSearch();
+                }
+            );  
+            }
         });
-
-
 
       });
 };
