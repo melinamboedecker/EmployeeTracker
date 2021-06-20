@@ -24,7 +24,7 @@ connection.connect((err) => {
   
 console.log(' ________________________________________________________________')
 console.log('')
-console.log('                Employee Tracker                                  ')
+console.log('                Employee Tracker                                 ')
 console.log(' ________________________________________________________________')
 console.log('')
 console.log('')
@@ -94,9 +94,8 @@ const runSearch = () => {
             addRole();
             break;    
   
-          case 'Remove role':
-            console.log('remove role')   
-            //removeRole();
+          case 'Remove role':   
+            removeRole();
             break;
 
           case 'View all departments':   
@@ -309,7 +308,18 @@ const viewAllRoles = () => {
 
   };
 
+
 const addRole = () => {
+    let departments = [];
+    const query = 'SELECT name FROM departments';
+
+    connection.query (query, (err, res) => {
+        if (err) throw err;
+        res.forEach ((d)=>{
+            departments.push(d.name)
+        })
+    
+    console.log(departments)
     inquirer
       .prompt([{
         name: 'title',
@@ -321,15 +331,22 @@ const addRole = () => {
         type: 'input',
         message: "What is the salary?",
       },
+    //   {
+    //     name: 'department',
+    //     type: 'list',
+    //     message: "What is the department?",
+    //     choices: departments
+    //   },
       {
-        name: 'department_ID',
-        type: 'input',
-        message: "What is the department ID number?",
-      },
+          name: 'department_ID',
+          type: 'input',
+          message: 'What is the department_id?'
+      }
       
     ])
       .then((answer) => {
         //when questions finished, insert information into roles table in db
+
         connection.query(
             'INSERT INTO roles SET ?',
             {
@@ -345,7 +362,52 @@ const addRole = () => {
             }
         );
       });
+
+    });
 };
+
+const removeRole= () => {
+    const query = 'SELECT title FROM roles';
+    let roles = [];
+
+    connection.query (query, (err, res) => {
+        if (err) throw err;
+        res.forEach ((r)=>{
+            roles.push(r.title)
+        })
+        roles.push("exit");
+        
+        inquirer
+        .prompt([{
+          name: 'role',
+          type: 'list',
+          message: "What role do you want to delete? or choose exit to return to main menu",
+          choices: roles
+        },
+      ])
+        .then((answer) => {
+          //when role chosen, delete it from db
+          if (answer.role === 'exit') {
+            runSearch();
+          } else {
+            connection.query(
+                'DELETE FROM roles WHERE ?',
+                {
+                    title: answer.role,
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log('Role ' + answer.role + ' deleted successfully');
+                    //go back to main menu
+                    runSearch();
+                }
+            );  
+            }
+        });
+
+      });
+};
+
 
 const viewAllDepartments = () => {
     const query = 'SELECT id, name AS "department name" FROM departments';
