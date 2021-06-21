@@ -52,6 +52,7 @@ const runSearch = () => {
           'View all departments',
           'Add department',
           'Remove department',
+          'View department total budget',
           'exit',
         ],
       })
@@ -108,6 +109,10 @@ const runSearch = () => {
     
           case 'Remove department': 
             removeDepartment();
+            break;
+
+          case 'View department total budget': 
+            viewBudgetbyDept();
             break;
 
           case 'exit':
@@ -179,7 +184,7 @@ const viewAllEmployeesbyMgr = () => {
             managers.push(m.manager)
             }
         })
-
+        
         noDuplicateManagers = [...new Set(managers)];
         
         inquirer
@@ -484,7 +489,7 @@ const updateEmployeeManager = () => {
             res.forEach ((m)=>{
                 managers.push(m.mgrname)
             })
-            getEmpsWithIds();
+            getEmpsWithIds(); 
         })
     };
 
@@ -578,12 +583,6 @@ const addRole = () => {
         message: "What is the department?",
         choices: departments
       },
-    //   {
-    //       name: 'department_ID',
-    //       type: 'input',
-    //       message: 'What is the department_id?'
-    //   }
-      
     ])
       .then((answer) => {
         //when questions finished, find department_id for chosen department 
@@ -729,4 +728,43 @@ const removeDepartment = () => {
         });
 
       });
+};
+
+const viewBudgetbyDept = () => {
+    let departments = [];
+    let totalBudget = 0;
+
+    const query = 'SELECT name FROM departments'
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        res.forEach ((d)=>{
+            departments.push(d.name)
+        })
+        
+        inquirer
+        .prompt([{
+          name: 'department',
+          type: 'list',
+          message: "For which department do you want to view the total budget?",
+          choices: departments
+        },
+      ])
+        .then((answer) => {
+          //when department chosen, run query 
+            connection.query(
+                'SELECT employees.id AS "Employee ID", employees.first_name AS "First Name", employees.last_name AS "Last Name", roles.title AS Role, roles.salary, CONCAT(m.first_name, " ", m.last_name) AS "Manager", departments.name AS Department FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id LEFT JOIN employees m ON employees.manager_id = m.id WHERE departments.name = ' + connection.escape(answer.department), 
+                (err, res) => {
+                    if (err) throw err;
+                    for (i=0; i<res.length; i++) {
+                        totalBudget = totalBudget + res[i].salary
+                    } 
+                    console.log('\n');
+                    console.log('Total Budget for ' + answer.department + " is $" + totalBudget)
+                    console.log('\n');
+                    //go back to main menu
+                    runSearch();
+                }
+            );        
+        });
+    })
 };
