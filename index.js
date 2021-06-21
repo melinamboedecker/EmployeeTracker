@@ -166,8 +166,9 @@ const viewAllEmployeesbyDept = () => {
 };
 
 const viewAllEmployeesbyMgr = () => {
-    // const query = 'SELECT employees.manager_id AS "Manager ID", employees.first_name AS "First Name", employees.last_name AS "Last Name", roles.title AS Role FROM employees LEFT JOIN roles ON employees.role_id = roles.id ORDER BY employees.manager_id'
     let managers = [];
+    let noDuplicateManagers = [];
+
     const query = 'SELECT CONCAT(m.first_name, " ", m.last_name) AS manager FROM employees LEFT JOIN employees m ON employees.manager_id = m.id'
     connection.query(query, (err, res) => {
         if (err) throw err;
@@ -178,13 +179,15 @@ const viewAllEmployeesbyMgr = () => {
             managers.push(m.manager)
             }
         })
+
+        noDuplicateManagers = [...new Set(managers)];
         
         inquirer
         .prompt([{
           name: 'manager',
           type: 'list',
           message: "For which manager do you want to view all employees?",
-          choices: managers
+          choices: noDuplicateManagers
         },
       ])
         .then((answer) => {
