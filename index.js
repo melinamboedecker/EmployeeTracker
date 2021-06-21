@@ -205,46 +205,117 @@ const viewAllEmployeesbyMgr = () => {
 };
 
 const addEmployee = () => {
-    inquirer
-      .prompt([{
-        name: 'firstname',
-        type: 'input',
-        message: "What is the employee's first name?",
-      },
-      {
-        name: 'lastname',
-        type: 'input',
-        message: "What is the employee's last name?",
-      },
-      {
-        name: 'role_ID',
-        type: 'input',
-        message: "What is the employee's role ID number?",
-      },
-      {
-        name: 'manager_ID',
-        type: 'input',
-        message: "What is the employee's manager ID number?",
-      }
-    ])
-      .then((answer) => {
-        //when questions finished, insert information into employees table in db
-        connection.query(
-            'INSERT INTO employees SET ?',
-            {
-                first_name: answer.firstname,
-                last_name: answer.lastname,
-                role_id: answer.role_ID,
-                manager_id: answer.manager_ID
+    let roles = [];
+    let rolesWithIds = [];
+    let managers = [];
+    let managersWithIds = [];
+    let newId;
+    let mgrId;
+
+    connection.query('SELECT title FROM roles', (err, res) => {
+        if (err) throw err;
+
+        res.forEach ((r)=>{
+            roles.push(r.title)
+        })
+        getRolesWithIds()
+    });
+
+
+    const getRolesWithIds = () => {
+        connection.query('SELECT id, title FROM roles', (err, res) => {
+            if (err) throw err;
+
+            rolesWithIds = res;
+            getManagersWithIds();
+        })
+    }
+
+    const getManagersWithIds = () => {
+        connection.query('SELECT id, CONCAT(id, " ", first_name, " ", last_name) AS name FROM employees', (err, res) => {
+            if (err) throw err;
+
+            managersWithIds = res;
+            getManagers();
+        })
+
+    }
+
+    const getManagers = () => {
+        connection.query('SELECT CONCAT(id, " ", first_name, " ", last_name) AS manager FROM employees', (err, res) => {
+            if (err) throw err;
+            res.forEach ((m)=>{
+                if (m.manager === null) {
+                    delete(m)
+                } else {
+                managers.push(m.manager)
+                }
+            })
+            managers.push('none');
+
+            inquirer
+            .prompt([{
+              name: 'firstname',
+              type: 'input',
+              message: "What is the employee's first name?",
             },
-            (err) => {
-                if (err) throw err;
-                console.log('Employee entered successfully');
-                //go back to main menu
-                runSearch();
+            {
+              name: 'lastname',
+              type: 'input',
+              message: "What is the employee's last name?",
+            },
+            {
+              name: 'role',
+              type: 'list',
+              message: "What is the employee's role?",
+              choices: roles
+            },
+            {
+              name: 'manager',
+              type: 'list',
+              message: "Who is the employee's manager?",
+              choices: managers
             }
-        );
-      });
+          ])
+            .then((answer) => {
+              //when questions finished, insert information into employees table in db
+              for (i=0; i<rolesWithIds.length; i++) {
+                if (rolesWithIds[i].title === answer.role) {
+                    newId =  rolesWithIds[i].id;
+                }
+            }
+
+            for (i=0; i<managersWithIds.length; i++) {
+                if (managersWithIds[i].name === answer.manager) {
+                    mgrId = managersWithIds[i].id
+                }
+            }
+
+              connection.query(
+                  'INSERT INTO employees SET ?',
+                  {
+                      first_name: answer.firstname,
+                      last_name: answer.lastname,
+                      role_id: newId,
+                      manager_id: mgrId
+                  },
+                  (err) => {
+                      if (err) throw err;
+                      console.log('Employee entered successfully');
+                      //go back to main menu
+                      runSearch();
+                  }
+              );
+            });
+
+        });
+
+    };
+
+
+     
+
+ 
 };
   
 const removeEmployee = () => {
