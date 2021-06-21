@@ -19,9 +19,8 @@ After cloning the repo to your local device, be sure to have Node.js and MySQL i
 ## Usage: 
 The app will prompt with several questions, choose the one you would like to execute.  
 
-![Screenshot](Develop/public/assets/images/notestakerscreenshot1.png)
+![Screenshot](assets/EmployeeTracker.gif)
 
-![Screenshot](Develop/public/assets/images/notestakerscreenshot2.png)
 
 ## License: 
 Licensed under the [MIT](https://opensource.org/licenses/MIT) license. 
