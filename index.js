@@ -1,6 +1,7 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
+const { registerPrompt } = require('inquirer');
 
 // create the connection information for the sql database
 const connection = mysql.createConnection({
@@ -133,29 +134,75 @@ const runSearch = () => {
   };
 
 const viewAllEmployeesbyDept = () => {
-    const query = 'SELECT departments.name AS Department, employees.id AS "Employee ID", employees.first_name AS "First Name", employees.last_name AS "Last Name", roles.title AS Role, employees.manager_id AS "Manager ID" FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id ORDER BY departments.name'
-
+    let departments = [];
+    const query = 'SELECT name FROM departments'
     connection.query(query, (err, res) => {
         if (err) throw err;
-        console.log('\n');
-        console.table(res);
-        runSearch();
-      });
+        res.forEach ((d)=>{
+            departments.push(d.name)
+        })
+        
+        inquirer
+        .prompt([{
+          name: 'department',
+          type: 'list',
+          message: "For which department do you want to view all employees?",
+          choices: departments
+        },
+      ])
+        .then((answer) => {
+          //when department chosen, run query to show only employees from that department
+            connection.query(
+                'SELECT employees.id AS "Employee ID", employees.first_name AS "First Name", employees.last_name AS "Last Name", roles.title AS Role, roles.salary, CONCAT(m.first_name, " ", m.last_name) AS "Manager", departments.name AS Department FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id LEFT JOIN employees m ON employees.manager_id = m.id WHERE departments.name = ' + connection.escape(answer.department), 
+                (err, res) => {
+                    if (err) throw err;
+                    console.log('\n');
+                    console.table(res);
+                    //go back to main menu
+                    runSearch();
+                }
+            );        
+        });
+    })
 };
 
 const viewAllEmployeesbyMgr = () => {
-    const query = 'SELECT employees.manager_id AS "Manager ID", employees.first_name AS "First Name", employees.last_name AS "Last Name", roles.title AS Role FROM employees LEFT JOIN roles ON employees.role_id = roles.id ORDER BY employees.manager_id'
-
+    // const query = 'SELECT employees.manager_id AS "Manager ID", employees.first_name AS "First Name", employees.last_name AS "Last Name", roles.title AS Role FROM employees LEFT JOIN roles ON employees.role_id = roles.id ORDER BY employees.manager_id'
+    let managers = [];
+    const query = 'SELECT CONCAT(m.first_name, " ", m.last_name) AS manager FROM employees LEFT JOIN employees m ON employees.manager_id = m.id'
     connection.query(query, (err, res) => {
-        console.log('\n');
-        console.table(res);
-        runSearch();
-      });
-
-
-    console.table([
-        query
-    ])
+        if (err) throw err;
+        res.forEach ((m)=>{
+            if (m.manager === null) {
+                delete(m)
+            } else {
+            managers.push(m.manager)
+            }
+        })
+        
+        inquirer
+        .prompt([{
+          name: 'manager',
+          type: 'list',
+          message: "For which manager do you want to view all employees?",
+          choices: managers
+        },
+      ])
+        .then((answer) => {
+          //when department chosen, run query to show only employees from that department
+            connection.query(
+                'SELECT employees.id AS "Employee ID", employees.first_name AS "First Name", employees.last_name AS "Last Name", roles.title AS Role, roles.salary, departments.name AS Department, CONCAT(m.first_name, " ", m.last_name) AS "Manager"  FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id LEFT JOIN employees m ON employees.manager_id = m.id WHERE CONCAT(m.first_name, " ", m.last_name) = ' + connection.escape(answer.manager), 
+                (err, res) => {
+                    if (err) throw err;
+                    console.log('\n');
+                    console.table(res);
+                    //go back to main menu
+                    runSearch();
+                }
+            );        
+        });
+    })
+ 
 };
 
 const addEmployee = () => {
@@ -189,7 +236,7 @@ const addEmployee = () => {
                 first_name: answer.firstname,
                 last_name: answer.lastname,
                 role_id: answer.role_ID,
-                // manager_id: answer.manager_ID
+                manager_id: answer.manager_ID
             },
             (err) => {
                 if (err) throw err;
@@ -202,15 +249,20 @@ const addEmployee = () => {
 };
   
 const removeEmployee = () => {
-    const query = 'SELECT id, CONCAT (first_name, " ", last_name) AS name FROM employees';
+    const query = 'SELECT CONCAT (id, " ", first_name, " ", last_name) AS name FROM employees';
     let employees = [];
 
     connection.query (query, (err, res) => {
+        console.log('______________')
+        console.log(res)
+        console.log('+++++++++++++')
         if (err) throw err;
+
         res.forEach ((e)=>{
-            employees.push(e.title)
+            employees.push(e)
         })
         employees.push("exit");
+        console.log(employees)
         
         inquirer
         .prompt([{
@@ -222,6 +274,9 @@ const removeEmployee = () => {
       ])
         .then((answer) => {
           //when employee chosen, delete it from db
+         console.log('KKKKKKK')
+          console.log(answer)
+
           if (answer.name === 'exit') {
             runSearch();
           } else {
@@ -248,60 +303,81 @@ const removeEmployee = () => {
 
 
 const updateEmployeeRole = () => {
-    console.log('write update EMp role functino');
-    const query = 'SELECT * FROM employees'
-    let employees;
+    
+    const query = 'SELECT CONCAT (id, " ", first_name, " ", last_name) AS name FROM employees'
+    let employees = [];
+    let roles = [];
+    let rolesWithIds = [];
+    let newId;
+    let updateThisEmployee;
 
     connection.query(query, (err, res) => {
-        if (err){
-            throw err;
-        }
-        employees = res
-        console.log(res)
+        if (err) throw err;
+
+        res.forEach ((e)=>{
+            employees.push(e)
+        })
+        findRoles();
     })
+        
+    const findRoles = () => {
+            connection.query('SELECT title FROM roles', (err, res) => {
+            if (err) throw err;
 
+            res.forEach ((r)=>{
+                roles.push(r.title)
+            })
+            getRolesWithIds();
+        })
+    };
 
+    const getRolesWithIds = () => {
+            connection.query('SELECT id, title FROM roles', (err, res) => {
+                if (err) throw err;
 
+                rolesWithIds = res;
+                getEmpRoleAnswer();
+            })
+    }
 
-    inquirer
-      .prompt([{
-        name: 'employeetoupdate',
-        type: 'list',
-        message: "Which employee do you want to update?",
-      },
+    const getEmpRoleAnswer = () => {
+        inquirer
+        .prompt([{
+            name: 'employeetoupdate',
+            type: 'list',
+            message: "Which employee do you want to update?",
+            choices: employees
+        },
+        {
+            name: 'newrole',
+            type: 'list',
+            message: "Which role do you want to assign this employee?",
+            choices: roles
+        }
     ])
         .then((answer) => {
-            //put answer here and pull current role from it
-        })
-
-
-
-        .prompt([{
-            name: 'new role',
-            type: 'input',
-            message: "Enter new role ID",
-          },
-        ])
-
-      .then((answer) => {
-        //when questions finished, update employee role in db
-        connection.query(
-            'INSERT INTO employees SET ?',
-            {
-                first_name: answer.firstname,
-                last_name: answer.lastname,
-                role_id: answer.role_ID,
-                manager_id: answer.manager_ID
-            },
-            (err) => {
+               //when questions finished, update employee role in db
+               updateThisEmployee = answer.employeetoupdate;
+               for (i=0; i<rolesWithIds.length; i++) {
+                   if (rolesWithIds[i].title === answer.newrole) {
+                       newId =  rolesWithIds[i].id;
+                        updateRole();
+                   }
+               }
+            });
+        }          
+        const updateRole = () => {
+            connection.query(
+                'UPDATE employees SET role_id = ' + connection.escape(newId) + ' WHERE CONCAT (id, " ", first_name, " ", last_name) = ' + connection.escape(updateThisEmployee),
+                (err, res) => {
                 if (err) throw err;
-                console.log('Employee entered successfully');
+                console.log('Employee role updated successfully');
                 //go back to main menu
                 runSearch();
             }
         );
-      });
-
+        }     
+        
 };
 
 
@@ -326,8 +402,7 @@ const addRole = () => {
         res.forEach ((d)=>{
             departments.push(d.name)
         })
-    
-    console.log(departments)
+
     inquirer
       .prompt([{
         name: 'title',
@@ -339,28 +414,31 @@ const addRole = () => {
         type: 'input',
         message: "What is the salary?",
       },
-    //   {
-    //     name: 'department',
-    //     type: 'list',
-    //     message: "What is the department?",
-    //     choices: departments
-    //   },
       {
-          name: 'department_ID',
-          type: 'input',
-          message: 'What is the department_id?'
-      }
+        name: 'department',
+        type: 'list',
+        message: "What is the department?",
+        choices: departments
+      },
+    //   {
+    //       name: 'department_ID',
+    //       type: 'input',
+    //       message: 'What is the department_id?'
+    //   }
       
     ])
       .then((answer) => {
-        //when questions finished, insert information into roles table in db
-
+        //when questions finished, find department_id for chosen department 
+        connection.query('SELECT * FROM departments WHERE departments.name = ' + connection.escape(answer.department), 
+        (err, res) => {
+            if (err) throw err; 
+        //insert information into roles table in db
         connection.query(
             'INSERT INTO roles SET ?',
             {
                 title: answer.title,
                 salary: answer.salary,
-                department_id: answer.department_ID
+                department_id: res[0].id
             },
             (err) => {
                 if (err) throw err;
@@ -369,6 +447,7 @@ const addRole = () => {
                 runSearch();
             }
         );
+        })
       });
 
     });
