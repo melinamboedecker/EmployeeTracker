@@ -4,7 +4,7 @@ An app for managing employees using node, inquirer, and MySQL
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
 ## Description: 
-This is a command line application that will let you manage employees in your organization.  The database has three tables, one for employees, one for employee roles, and one for departments. You can view, add, and/or remove roles and departments depending on your organizational needs.  You can also view all of your employees at once, view all employess by department or manager, add employees, remove employees, and update individual employee roles and/or employee managers. This application uses Node.js, Inquirer, and MySQL.
+This is a command line application that will let you manage employees in your organization.  The database has three tables, one for employees, one for employee roles, and one for departments. You can view, add, and/or remove roles and departments depending on your organizational needs.  You can also view all of your employees at once, view all employess by department or manager, add employees, remove employees, and update individual employee roles and/or employee managers. Additionally, you you have the option to view each department's total budget. This application uses Node.js, Inquirer, and MySQL.
 
 ## Table of Contents: 
 * [Installation](#installation)
