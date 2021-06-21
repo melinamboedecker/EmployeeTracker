@@ -83,8 +83,7 @@ const runSearch = () => {
             break;
 
           case 'Update employee manager':
-              console.log('update emp mgr')
-            // updateEmployeeManager();
+            updateEmployeeManager();
             break; 
 
           case 'View all roles': 
@@ -378,6 +377,86 @@ const updateEmployeeRole = () => {
         );
         }     
         
+};
+
+const updateEmployeeManager = () => {
+
+        
+    const query = 'SELECT CONCAT (id, " ", first_name, " ", last_name) AS name FROM employees'
+    let employees = [];
+    let managers = [];
+    let empsWithIds = [];
+    let newMgrId;
+    let updateThisEmployee;
+
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+
+        res.forEach ((e)=>{
+            employees.push(e)
+        })
+        findManagers();
+    })
+        
+    const findManagers = () => {
+            connection.query('SELECT CONCAT (employees.manager_id, " ", m.first_name, " ", m.last_name) AS mgrname FROM employees INNER JOIN employees m ON employees.manager_id = m.id', (err, res) => {
+            if (err) throw err;
+
+            res.forEach ((m)=>{
+                managers.push(m.mgrname)
+            })
+            getEmpsWithIds();
+        })
+    };
+
+    const getEmpsWithIds = () => {
+        connection.query('SELECT id, CONCAT (id, " ", first_name, " ", last_name) AS name FROM employees', (err, res) => {
+            if (err) throw err;
+
+            empsWithIds = res;
+            getMgrAnswer();
+        })
+}
+
+    const getMgrAnswer = () => {
+        inquirer
+        .prompt([{
+            name: 'employeetoupdate',
+            type: 'list',
+            message: "Which employee do you want to update?",
+            choices: employees
+        },
+        {
+            name: 'newmgr',
+            type: 'list',
+            message: "Which manager do you want to assign this employee?",
+            choices: employees
+        }
+    ])
+        .then((answer) => {
+               //when questions finished, update manager in db
+               updateThisEmployee = answer.employeetoupdate;
+               console.log(empsWithIds.length)
+               for (i=0; i<empsWithIds.length; i++) {
+                   if (empsWithIds[i].name === answer.newmgr) {
+                       newMgrId =  empsWithIds[i].id;
+                        updateMgr();
+                   }
+               }
+            });
+        }          
+        const updateMgr = () => {
+            connection.query(
+                'UPDATE employees SET manager_id = ' + connection.escape(newMgrId) + ' WHERE CONCAT (id, " ", first_name, " ", last_name) = ' + connection.escape(updateThisEmployee),
+                (err, res) => {
+                if (err) throw err;
+                console.log('Employee manager upated successfully');
+                //go back to main menu
+                runSearch();
+            }
+        );
+        }  
+
 };
 
 
