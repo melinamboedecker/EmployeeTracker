@@ -319,20 +319,17 @@ const addEmployee = () => {
 };
   
 const removeEmployee = () => {
-    const query = 'SELECT CONCAT (id, " ", first_name, " ", last_name) AS name FROM employees';
     let employees = [];
+    let empIdToDele;
+    let empNameToDele;
 
-    connection.query (query, (err, res) => {
-        console.log('______________')
-        console.log(res)
-        console.log('+++++++++++++')
+    connection.query ('SELECT id, CONCAT (id, " ", first_name, " ", last_name) AS name FROM employees', (err, res) => {
         if (err) throw err;
 
         res.forEach ((e)=>{
             employees.push(e)
         })
         employees.push("exit");
-        console.log(employees)
         
         inquirer
         .prompt([{
@@ -344,30 +341,38 @@ const removeEmployee = () => {
       ])
         .then((answer) => {
           //when employee chosen, delete it from db
-         console.log('KKKKKKK')
-          console.log(answer)
 
-          if (answer.name === 'exit') {
+          //set employee name to delete to variable so that it can be printed in the console when deletion performed
+          empNameToDele = answer.name
+
+          if (answer.name === 'exit')  {
             runSearch();
           } else {
+            for (i=0; i<employees.length; i++) {
+                if (employees[i].name === answer.name) {
+                    empIdToDele =  employees[i].id;
+                    deleEmp();
+                }
+            }
+        }
+    });
+
+        const deleEmp = () => {
             connection.query(
                 'DELETE FROM employees WHERE ?',
                 {
-                    id: answer.id,
+                    id: empIdToDele,
                 },
                 (err) => {
                     if (err) throw err;
-                    console.log('Employee ' + answer.name + ' deleted successfully');
+                    console.log('Employee ' + empNameToDele + ' deleted successfully');
                     //go back to main menu
                     runSearch();
                 }
             );  
-            }
-        });
-
-      });
-
-
+        }  
+        // );
+    });
 
 }; 
 
